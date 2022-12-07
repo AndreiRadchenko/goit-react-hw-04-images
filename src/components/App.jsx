@@ -1,6 +1,5 @@
 import { Component } from 'react';
 import fetchImages from '../galleryApi';
-// import loadingImg from '../galleryApi/loading.webp';
 import Box from 'Box';
 import Searchbar from 'components/Searchbar';
 import ImageGallery from 'components/ImageGallery';
@@ -13,14 +12,6 @@ export const Status = {
   NOTFOUND: 'notfound',
   ERROR: 'error',
 };
-
-// const createSceletonImages = () => {
-//   const images = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(key => ({
-//     id: key,
-//     image: { webformatURL: loadingImg },
-//   }));
-//   return images;
-// };
 
 const scrollWindow = () => {
   const imageCard = document
@@ -83,7 +74,6 @@ export class App extends Component {
     }
     if (newQuery !== prevState.query) {
       try {
-        // this.resetState(Status.PENDING);
         const apiResponse = await fetchImages(newQuery);
         if (apiResponse.total === 0) {
           this.resetState(Status.NOTFOUND);
@@ -101,7 +91,7 @@ export class App extends Component {
     }
     if (newPage !== prevState.page) {
       try {
-        // this.setState({ status: Status.PENDING });
+        // scrollWindow();
         const apiResponse = await fetchImages(newQuery, newPage);
         this.setState(prevState => ({
           images: [...prevState.images, ...apiResponse.hits],
@@ -124,7 +114,7 @@ export class App extends Component {
             <p>Sorry, something went wrong. Please try again.</p>
           )}
           {status === Status.IDLE && (
-            <p>Please, enter query in search fild and hit Enter</p>
+            <p>Please, write query in search fild and hit Enter</p>
           )}
           {status === Status.NOTFOUND && (
             <p>Sorry, we didn't find any pictures for your query</p>
