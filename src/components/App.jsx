@@ -52,10 +52,21 @@ export class App extends Component {
       status: newStatus,
     });
 
-  handleSubmit = query => this.setState({ query });
+  handleSubmit = query => {
+    this.setState({
+      query,
+      page: 1,
+      total: 0,
+      images: [],
+      status: Status.PENDING,
+    });
+  };
 
   handleLoadMore = () => {
-    this.setState(prev => ({ page: prev.page + 1 }));
+    this.setState(prev => ({
+      page: prev.page + 1,
+      status: Status.PENDING,
+    }));
   };
 
   async componentDidUpdate(_, prevState) {
@@ -72,7 +83,7 @@ export class App extends Component {
     }
     if (newQuery !== prevState.query) {
       try {
-        this.resetState(Status.PENDING);
+        // this.resetState(Status.PENDING);
         const apiResponse = await fetchImages(newQuery);
         if (apiResponse.total === 0) {
           this.resetState(Status.NOTFOUND);
@@ -90,7 +101,7 @@ export class App extends Component {
     }
     if (newPage !== prevState.page) {
       try {
-        this.setState({ status: Status.PENDING });
+        // this.setState({ status: Status.PENDING });
         const apiResponse = await fetchImages(newQuery, newPage);
         this.setState(prevState => ({
           images: [...prevState.images, ...apiResponse.hits],
