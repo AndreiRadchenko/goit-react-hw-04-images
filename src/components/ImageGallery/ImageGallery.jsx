@@ -11,20 +11,15 @@ const createSceletonImages = () => {
   return images;
 };
 
-const ImageGallery = ({ images, status }) => {
+const ImageGallery = ({ images, status, onClick }) => {
   return (
-    <style.ImageGallery id="gallery">
+    <style.ImageGallery id="gallery" onClick={onClick}>
       {images.map(image => (
-        <ImageGalleryItem key={image.id} image={image} status={status} />
+        <ImageGalleryItem key={image.id} image={image} />
       ))}
       {status === Status.PENDING &&
         createSceletonImages().map(image => (
-          <ImageGalleryItem
-            key={image.id}
-            image={image}
-            status={status}
-            skeleton
-          />
+          <ImageGalleryItem key={image.id} skeletonActive />
         ))}
     </style.ImageGallery>
   );

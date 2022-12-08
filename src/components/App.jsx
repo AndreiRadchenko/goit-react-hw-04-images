@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import ReactModal from 'react-modal';
 import fetchImages from '../galleryApi';
 import Box from 'Box';
 import Searchbar from 'components/Searchbar';
@@ -26,6 +27,24 @@ const scrollWindow = () => {
   }
 };
 
+ReactModal.setAppElement('#root');
+
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    padding: '0',
+    marginTop: '30px',
+  },
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+};
+
 export class App extends Component {
   state = {
     page: 1,
@@ -33,6 +52,21 @@ export class App extends Component {
     status: Status.IDLE,
     images: [],
     total: 0,
+    modalOpen: false,
+    largeImageURL: '',
+  };
+
+  openModal = e => {
+    const largeImage = e.target.getAttribute('data-image');
+    // console.log(e.target.getAttribute('data-image'));
+    if (!largeImage) {
+      return;
+    }
+    this.setState({ modalOpen: true, largeImageURL: largeImage });
+  };
+
+  closeModal = () => {
+    this.setState({ modalOpen: false });
   };
 
   resetState = newStatus =>
@@ -108,6 +142,14 @@ export class App extends Component {
     const isButtonVisible = total > images.length;
     return (
       <>
+        <ReactModal
+          isOpen={this.state.modalOpen}
+          onRequestClose={this.closeModal}
+          style={customStyles}
+          contentLabel="Example Modal"
+        >
+          <img src={this.state.largeImageURL} alt=""></img>
+        </ReactModal>
         <Searchbar onSubmit={this.handleSubmit} />
         <Box margin="30px auto" textAlign="center" as="section">
           {status === Status.ERROR && (
@@ -121,6 +163,7 @@ export class App extends Component {
           )}
           {(status === Status.PENDING || status === Status.RESOLVED) && (
             <ImageGallery
+              onClick={this.openModal}
               images={this.state.images}
               status={this.state.status}
             />
