@@ -1,4 +1,5 @@
-##Image-finder structure
+## Image-finder structure
+
 ![image-finder-structure](./assets/image-finder-structure.png)
 
 **Read in other languages: [Русский](README.md), [Polska](README.pl.md),
