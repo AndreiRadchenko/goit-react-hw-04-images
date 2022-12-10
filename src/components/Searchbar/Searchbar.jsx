@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import * as style from './Searchbar.styled';
 import { MdSearch } from 'react-icons/md';
+import PropTypes from 'prop-types';
 
 class Searchbar extends Component {
   handleSubmit = event => {
@@ -29,5 +30,9 @@ class Searchbar extends Component {
     );
   }
 }
+
+Searchbar.propType = {
+  onSubmit: PropTypes.func.isRequired,
+};
 
 export default Searchbar;

@@ -2,6 +2,7 @@ import * as style from './ImageGallery.styled';
 import ImageGalleryItem from 'components/ImageGalleryItem';
 // import loadingImg from '../../galleryApi/loading.webp';
 import { Status } from '../App';
+import PropTypes from 'prop-types';
 
 const createSceletonImages = () => {
   const images = [...Array(12)].map((key, idx) => ({
@@ -11,7 +12,20 @@ const createSceletonImages = () => {
   return images;
 };
 
-const ImageGallery = ({ images, status, onClick }) => {
+export const scrollWindow = () => {
+  const imageCard = document
+    .querySelector('#gallery')
+    ?.firstElementChild?.getBoundingClientRect();
+  if (imageCard) {
+    const { height: cardHeight } = imageCard;
+    window.scrollBy({
+      top: cardHeight * 2,
+      behavior: 'smooth',
+    });
+  }
+};
+
+export const ImageGallery = ({ images, status, onClick }) => {
   return (
     <style.ImageGallery id="gallery" onClick={onClick}>
       {images.map(image => (
@@ -25,4 +39,8 @@ const ImageGallery = ({ images, status, onClick }) => {
   );
 };
 
-export default ImageGallery;
+ImageGallery.propType = {
+  images: PropTypes.array,
+  status: PropTypes.string,
+  onClick: PropTypes.func,
+};

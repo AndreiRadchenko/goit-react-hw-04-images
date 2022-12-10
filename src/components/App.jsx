@@ -1,10 +1,12 @@
 import { Component } from 'react';
 import ReactModal from 'react-modal';
+import { customStyles } from 'components/ReactModal';
 import fetchImages from '../galleryApi';
 import Box from 'Box';
 import Searchbar from 'components/Searchbar';
-import ImageGallery from 'components/ImageGallery';
+import { ImageGallery, scrollWindow } from 'components/ImageGallery';
 import Button from 'components/Button';
+import toast, { Toaster } from 'react-hot-toast';
 
 export const Status = {
   IDLE: 'idle',
@@ -14,36 +16,7 @@ export const Status = {
   ERROR: 'error',
 };
 
-const scrollWindow = () => {
-  const imageCard = document
-    .querySelector('#gallery')
-    ?.firstElementChild?.getBoundingClientRect();
-  if (imageCard) {
-    const { height: cardHeight } = imageCard;
-    window.scrollBy({
-      top: cardHeight * 3,
-      behavior: 'smooth',
-    });
-  }
-};
-
 ReactModal.setAppElement('#root');
-
-const customStyles = {
-  content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    padding: '0',
-    marginTop: '30px',
-  },
-  overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-};
 
 export class App extends Component {
   state = {
@@ -58,7 +31,6 @@ export class App extends Component {
 
   openModal = e => {
     const largeImage = e.target.getAttribute('data-image');
-    // console.log(e.target.getAttribute('data-image'));
     if (!largeImage) {
       return;
     }
@@ -97,9 +69,6 @@ export class App extends Component {
   async componentDidUpdate(_, prevState) {
     const { page: newPage, query: newQuery } = this.state;
     if (newQuery === prevState.query && newPage === prevState.page) {
-      if (newPage > 1) {
-        scrollWindow();
-      }
       return;
     }
     if (newQuery === '') {
@@ -111,6 +80,9 @@ export class App extends Component {
         const apiResponse = await fetchImages(newQuery);
         if (apiResponse.total === 0) {
           this.resetState(Status.NOTFOUND);
+          toast("Sorry, we didn't find any pictures", {
+            icon: '🥺',
+          });
         } else {
           this.setState({
             total: apiResponse.total,
@@ -120,12 +92,13 @@ export class App extends Component {
         }
       } catch (error) {
         this.resetState(Status.ERROR);
+        toast.error('Sorry, something went wrong.');
       }
       return;
     }
-    if (newPage !== prevState.page) {
+    if (newPage > prevState.page) {
       try {
-        // scrollWindow();
+        scrollWindow();
         const apiResponse = await fetchImages(newQuery, newPage);
         this.setState(prevState => ({
           images: [...prevState.images, ...apiResponse.hits],
@@ -133,6 +106,7 @@ export class App extends Component {
         }));
       } catch (error) {
         this.resetState(Status.ERROR);
+        toast.error('Sorry, something went wrong.');
       }
     }
   }
@@ -142,18 +116,21 @@ export class App extends Component {
     const isButtonVisible = total > images.length;
     return (
       <>
+        <Toaster position="top-right" containerStyle={{ zIndex: '1000' }} />
         <ReactModal
           isOpen={this.state.modalOpen}
           onRequestClose={this.closeModal}
           style={customStyles}
-          contentLabel="Example Modal"
+          contentLabel="Large Image Modal"
         >
           <img src={this.state.largeImageURL} alt=""></img>
         </ReactModal>
         <Searchbar onSubmit={this.handleSubmit} />
         <Box margin="30px auto" textAlign="center" as="section">
           {status === Status.ERROR && (
-            <p>Sorry, something went wrong. Please try again.</p>
+            <p style={{ color: 'tomato' }}>
+              Sorry, something went wrong. Please try again.
+            </p>
           )}
           {status === Status.IDLE && (
             <p>Please, write query in search fild and hit Enter</p>

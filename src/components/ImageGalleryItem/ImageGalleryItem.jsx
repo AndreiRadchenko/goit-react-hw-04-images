@@ -2,6 +2,7 @@ import { Component } from 'react';
 import * as style from './ImageGalleryItem.styled';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import PropTypes from 'prop-types';
 
 class ImageGalleryItem extends Component {
   render() {
@@ -16,12 +17,18 @@ class ImageGalleryItem extends Component {
             src={image.webformatURL}
             data-image={image.largeImageURL}
             alt=""
-            onClick={this.openModal}
           />
         )}
       </style.ImageGalleryItem>
     );
   }
 }
+
+ImageGalleryItem.propType = {
+  image: PropTypes.shape({
+    webformatURL: PropTypes.string,
+    largeImageURL: PropTypes.string,
+  }),
+};
 
 export default ImageGalleryItem;
