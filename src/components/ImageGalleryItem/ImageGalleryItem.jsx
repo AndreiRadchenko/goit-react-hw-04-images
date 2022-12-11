@@ -26,8 +26,8 @@ class ImageGalleryItem extends Component {
 
 ImageGalleryItem.propType = {
   image: PropTypes.shape({
-    webformatURL: PropTypes.string,
-    largeImageURL: PropTypes.string,
+    webformatURL: PropTypes.string.isRequired,
+    largeImageURL: PropTypes.string.isRequired,
   }),
 };
 

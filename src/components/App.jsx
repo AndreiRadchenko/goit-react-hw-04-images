@@ -67,15 +67,20 @@ export class App extends Component {
   };
 
   async componentDidUpdate(_, prevState) {
-    const { page: newPage, query: newQuery } = this.state;
-    if (newQuery === prevState.query && newPage === prevState.page) {
+    const { page: newPage, query: newQuery, total } = this.state;
+    if (
+      newQuery === prevState.query &&
+      newPage === prevState.page &&
+      total === prevState.total
+    ) {
       return;
     }
     if (newQuery === '') {
       this.resetState(Status.IDLE);
       return;
     }
-    if (newQuery !== prevState.query) {
+    // newQuery !== prevState.query;
+    if (total === 0) {
       try {
         const apiResponse = await fetchImages(newQuery);
         if (apiResponse.total === 0) {
@@ -86,7 +91,11 @@ export class App extends Component {
         } else {
           this.setState({
             total: apiResponse.total,
-            images: apiResponse.hits,
+            images: apiResponse.hits.map(image => ({
+              id: image.id,
+              webformatURL: image.webformatURL,
+              largeImageURL: image.largeImageURL,
+            })),
             status: Status.RESOLVED,
           });
         }
@@ -100,8 +109,13 @@ export class App extends Component {
       try {
         scrollWindow();
         const apiResponse = await fetchImages(newQuery, newPage);
+        const newImages = apiResponse.hits.map(image => ({
+          id: image.id,
+          webformatURL: image.webformatURL,
+          largeImageURL: image.largeImageURL,
+        }));
         this.setState(prevState => ({
-          images: [...prevState.images, ...apiResponse.hits],
+          images: [...prevState.images, ...newImages],
           status: Status.RESOLVED,
         }));
       } catch (error) {

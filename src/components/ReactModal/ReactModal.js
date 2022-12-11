@@ -7,8 +7,9 @@ export const customStyles = {
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
     padding: '0',
-    maxWidth: '80%',
+    maxHeight: '80%',
     border: 'none',
+    overflow: 'hidden',
   },
   overlay: {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
