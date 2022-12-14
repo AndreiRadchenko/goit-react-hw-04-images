@@ -75,32 +75,10 @@ export const App = () => {
       setStatus(Status.IDLE);
       return;
     }
-    // newQuery !== prevState.query;
     if (total === 0) {
       fetchData();
+      return;
     }
-
-    async function fetchData() {
-      try {
-        const apiResponse = await fetchImages(query);
-        if (apiResponse.total === 0) {
-          setStatus(Status.NOTFOUND);
-          toast("Sorry, we didn't find any pictures", {
-            icon: '🥺',
-          });
-        } else {
-          setTotal(apiResponse.total);
-          setImages(getImagesFromResponse(apiResponse));
-          setStatus(Status.RESOLVED);
-        }
-      } catch (error) {
-        this.resetState(Status.ERROR);
-        toast.error('Sorry, something went wrong.');
-      }
-    }
-  }, [query, total]);
-
-  useEffect(() => {
     if (page > prevPage) {
       scrollWindow();
       fetchData();
@@ -109,17 +87,25 @@ export const App = () => {
     async function fetchData() {
       try {
         const apiResponse = await fetchImages(query, page);
-        setImages(prevState => [
-          ...prevState,
-          ...getImagesFromResponse(apiResponse),
-        ]);
-        setStatus(Status.RESOLVED);
+        if (apiResponse.total === 0) {
+          setStatus(Status.NOTFOUND);
+          toast("Sorry, we didn't find any pictures", {
+            icon: '🥺',
+          });
+        } else {
+          setTotal(apiResponse.total);
+          setImages(prevState => [
+            ...prevState,
+            ...getImagesFromResponse(apiResponse),
+          ]);
+          setStatus(Status.RESOLVED);
+        }
       } catch (error) {
         resetState(Status.ERROR);
         toast.error('Sorry, something went wrong.');
       }
     }
-  }, [page, prevPage, query]);
+  }, [page, prevPage, query, total]);
 
   const isButtonVisible = total > images.length;
   return (
