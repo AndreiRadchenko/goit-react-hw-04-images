@@ -1,4 +1,5 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
+import { usePrevious } from 'react-use';
 import ReactModal from 'react-modal';
 import { customStyles } from 'components/ReactModal';
 import fetchImages from '../galleryApi';
@@ -18,154 +19,140 @@ export const Status = {
 
 ReactModal.setAppElement('#root');
 
-export class App extends Component {
-  state = {
-    page: 1,
-    query: '',
-    status: Status.IDLE,
-    images: [],
-    total: 0,
-    modalOpen: false,
-    largeImageURL: '',
-  };
+export const App = () => {
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState(Status.IDLE);
+  const [images, setImages] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const prevPage = usePrevious(page);
 
-  openModal = e => {
+  const openModal = e => {
     const largeImage = e.target.getAttribute('data-image');
     if (!largeImage) {
       return;
     }
-    this.setState({ modalOpen: true, largeImageURL: largeImage });
+    setModalOpen(true);
+    setLargeImageURL(largeImage);
   };
 
-  closeModal = () => {
-    this.setState({ modalOpen: false });
+  const closeModal = () => {
+    setModalOpen(false);
   };
 
-  resetState = newStatus =>
-    this.setState({
-      page: 1,
-      total: 0,
-      images: [],
-      status: newStatus,
-    });
-
-  handleSubmit = query => {
-    this.setState({
-      query,
-      page: 1,
-      total: 0,
-      images: [],
-      status: Status.PENDING,
-    });
+  const resetState = newStatus => {
+    setPage(1);
+    setTotal(0);
+    setImages([]);
+    setStatus(newStatus);
   };
 
-  handleLoadMore = () => {
-    this.setState(prev => ({
-      page: prev.page + 1,
-      status: Status.PENDING,
+  const handleSubmit = query => {
+    setQuery(query);
+    setPage(1);
+    setTotal(0);
+    setImages([]);
+    setStatus(Status.PENDING);
+  };
+
+  const handleLoadMore = () => {
+    setPage(prev => prev + 1);
+    setStatus(Status.PENDING);
+  };
+
+  const getImagesFromResponse = apiResponse => {
+    return apiResponse.hits.map(image => ({
+      id: image.id,
+      webformatURL: image.webformatURL,
+      largeImageURL: image.largeImageURL,
     }));
   };
 
-  async componentDidUpdate(_, prevState) {
-    const { page: newPage, query: newQuery, total } = this.state;
-    if (
-      newQuery === prevState.query &&
-      newPage === prevState.page &&
-      total === prevState.total
-    ) {
-      return;
-    }
-    if (newQuery === '') {
-      this.resetState(Status.IDLE);
+  useEffect(() => {
+    if (query === '') {
+      setStatus(Status.IDLE);
       return;
     }
     // newQuery !== prevState.query;
     if (total === 0) {
+      fetchData();
+    }
+
+    async function fetchData() {
       try {
-        const apiResponse = await fetchImages(newQuery);
+        const apiResponse = await fetchImages(query);
         if (apiResponse.total === 0) {
-          this.resetState(Status.NOTFOUND);
+          setStatus(Status.NOTFOUND);
           toast("Sorry, we didn't find any pictures", {
             icon: '🥺',
           });
         } else {
-          this.setState({
-            total: apiResponse.total,
-            images: apiResponse.hits.map(image => ({
-              id: image.id,
-              webformatURL: image.webformatURL,
-              largeImageURL: image.largeImageURL,
-            })),
-            status: Status.RESOLVED,
-          });
+          setTotal(apiResponse.total);
+          setImages(getImagesFromResponse(apiResponse));
+          setStatus(Status.RESOLVED);
         }
       } catch (error) {
         this.resetState(Status.ERROR);
         toast.error('Sorry, something went wrong.');
       }
-      return;
     }
-    if (newPage > prevState.page) {
+  }, [query, total]);
+
+  useEffect(() => {
+    if (page > prevPage) {
+      scrollWindow();
+      fetchData();
+    }
+
+    async function fetchData() {
       try {
-        scrollWindow();
-        const apiResponse = await fetchImages(newQuery, newPage);
-        const newImages = apiResponse.hits.map(image => ({
-          id: image.id,
-          webformatURL: image.webformatURL,
-          largeImageURL: image.largeImageURL,
-        }));
-        this.setState(prevState => ({
-          images: [...prevState.images, ...newImages],
-          status: Status.RESOLVED,
-        }));
+        const apiResponse = await fetchImages(query, page);
+        setImages(prevState => [
+          ...prevState,
+          ...getImagesFromResponse(apiResponse),
+        ]);
+        setStatus(Status.RESOLVED);
       } catch (error) {
-        this.resetState(Status.ERROR);
+        resetState(Status.ERROR);
         toast.error('Sorry, something went wrong.');
       }
     }
-  }
+  }, [page, prevPage, query]);
 
-  render() {
-    const { status, total, images } = this.state;
-    const isButtonVisible = total > images.length;
-    return (
-      <>
-        <Toaster position="top-right" containerStyle={{ zIndex: '1000' }} />
-        <ReactModal
-          isOpen={this.state.modalOpen}
-          onRequestClose={this.closeModal}
-          style={customStyles}
-          contentLabel="Large Image Modal"
-        >
-          <img src={this.state.largeImageURL} alt=""></img>
-        </ReactModal>
-        <Searchbar onSubmit={this.handleSubmit} />
-        <Box margin="30px auto" textAlign="center" as="section">
-          {status === Status.ERROR && (
-            <p style={{ color: 'tomato' }}>
-              Sorry, something went wrong. Please try again.
-            </p>
-          )}
-          {status === Status.IDLE && (
-            <p>Please, write query in search fild and hit Enter</p>
-          )}
-          {status === Status.NOTFOUND && (
-            <p>Sorry, we didn't find any pictures for your query</p>
-          )}
-          {(status === Status.PENDING || status === Status.RESOLVED) && (
-            <ImageGallery
-              onClick={this.openModal}
-              images={this.state.images}
-              status={this.state.status}
-            />
-          )}
-        </Box>
-        <Box margin="30px auto" textAlign="center" as="section">
-          {isButtonVisible && (
-            <Button onClick={this.handleLoadMore}>Load More</Button>
-          )}
-        </Box>
-      </>
-    );
-  }
-}
+  const isButtonVisible = total > images.length;
+  return (
+    <>
+      <Toaster position="top-right" containerStyle={{ zIndex: '1000' }} />
+      <ReactModal
+        isOpen={modalOpen}
+        onRequestClose={closeModal}
+        style={customStyles}
+        contentLabel="Large Image Modal"
+      >
+        <img src={largeImageURL} alt=""></img>
+      </ReactModal>
+      <Searchbar onSubmit={handleSubmit} />
+      <Box margin="30px auto" textAlign="center" as="section">
+        {status === Status.ERROR && (
+          <p style={{ color: 'tomato' }}>
+            Sorry, something went wrong. Please try again.
+          </p>
+        )}
+        {status === Status.IDLE && (
+          <p>Please, write query in search fild and hit Enter</p>
+        )}
+        {status === Status.NOTFOUND && (
+          <p>Sorry, we didn't find any pictures for your query</p>
+        )}
+        {(status === Status.PENDING || status === Status.RESOLVED) && (
+          <ImageGallery onClick={openModal} images={images} status={status} />
+        )}
+      </Box>
+      <Box margin="30px auto" textAlign="center" as="section">
+        {isButtonVisible && <Button onClick={handleLoadMore}>Load More</Button>}
+      </Box>
+    </>
+  );
+};
